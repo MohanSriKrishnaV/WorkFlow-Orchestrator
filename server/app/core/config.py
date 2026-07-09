@@ -9,6 +9,12 @@ class Settings(BaseSettings):
 
     api_prefix: str = "/api/v1"
 
+
+    rabbitmq_url: str = ""
+    amqp_exchange: str = "flowpilot.exchange"
+    amqp_queue: str = "flowpilot.test.queue"
+    amqp_routing_key: str = "test.message"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
