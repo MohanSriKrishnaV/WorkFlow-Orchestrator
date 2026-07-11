@@ -48,3 +48,14 @@ async def get_job_by_id(
 
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
+
+async def mark_job_queued(
+    db: AsyncSession,
+    job: Job,
+) -> Job:
+    job.status = JobStatus.QUEUED
+
+    await db.commit()
+    await db.refresh(job)
+
+    return job

@@ -31,10 +31,12 @@ source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 run worker:
-
-
 python -m app.workers.test_worker
+python -m app.workers.job_worker
+
 ```
+db queries:
+select * from jobs WHERE status='PENDING';
 
 Backend runs at:
 

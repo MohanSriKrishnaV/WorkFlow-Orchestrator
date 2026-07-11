@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     amqp_queue: str = "flowpilot.test.queue"
     amqp_routing_key: str = "test.message"
 
+    amqp_jobs_queue: str = "flowpilot.jobs.queue"
+    amqp_job_created_routing_key: str = "job.created"
+
     database_url: str = ""
 
 
