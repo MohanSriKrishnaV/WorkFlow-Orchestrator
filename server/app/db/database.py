@@ -8,14 +8,9 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-if not settings.database_url:
-    raise RuntimeError("DATABASE_URL is not configured")
-
-
 engine = create_async_engine(
     settings.database_url,
     echo=settings.app_debug,
-    pool_pre_ping=True,
 )
 
 AsyncSessionLocal = async_sessionmaker(

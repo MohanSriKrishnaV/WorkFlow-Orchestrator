@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,11 +51,55 @@ async def get_job_by_id(
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
+
 async def mark_job_queued(
     db: AsyncSession,
     job: Job,
 ) -> Job:
     job.status = JobStatus.QUEUED
+
+    await db.commit()
+    await db.refresh(job)
+
+    return job
+
+
+async def mark_job_running(
+    db: AsyncSession,
+    job: Job,
+) -> Job:
+    job.status = JobStatus.RUNNING
+    job.started_at = datetime.now(timezone.utc)
+    job.error_message = None
+
+    await db.commit()
+    await db.refresh(job)
+
+    return job
+
+
+async def mark_job_success(
+    db: AsyncSession,
+    job: Job,
+) -> Job:
+    job.status = JobStatus.SUCCESS
+    job.completed_at = datetime.now(timezone.utc)
+    job.error_message = None
+
+    await db.commit()
+    await db.refresh(job)
+
+    return job
+
+
+async def mark_job_failed(
+    db: AsyncSession,
+    job: Job,
+    error_message: str,
+) -> Job:
+    job.status = JobStatus.FAILED
+    job.completed_at = datetime.now(timezone.utc)
+    job.error_message = error_message
 
     await db.commit()
     await db.refresh(job)
