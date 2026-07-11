@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     amqp_queue: str = "flowpilot.test.queue"
     amqp_routing_key: str = "test.message"
 
+    database_url: str = ""
+
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
