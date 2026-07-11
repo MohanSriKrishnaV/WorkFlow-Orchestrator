@@ -34,6 +34,8 @@ run worker:
 python -m app.workers.test_worker
 python -m app.workers.job_worker
 
+outbox pattern
+
 ```
 db queries:
 select * from jobs WHERE status='PENDING';

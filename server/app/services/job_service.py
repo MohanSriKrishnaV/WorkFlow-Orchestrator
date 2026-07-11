@@ -105,3 +105,18 @@ async def mark_job_failed(
     await db.refresh(job)
 
     return job
+
+async def mark_job_retrying(
+    db: AsyncSession,
+    job: Job,
+    error_message: str,
+) -> Job:
+    job.retry_count += 1
+    job.status = JobStatus.QUEUED
+    job.completed_at = None
+    job.error_message = error_message
+
+    await db.commit()
+    await db.refresh(job)
+
+    return job

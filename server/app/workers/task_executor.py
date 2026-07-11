@@ -16,7 +16,7 @@ async def execute_task(
         return
 
     if task_type == "fail":
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
         raise RuntimeError("Intentional failure from fail task")
 
     raise ValueError(f"Unsupported task_type: {task_type}")
