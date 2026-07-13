@@ -15,8 +15,23 @@ class Settings(BaseSettings):
     amqp_queue: str = "flowpilot.test.queue"
     amqp_routing_key: str = "test.message"
 
+    amqp_jobs_exchange: str = "flowpilot.jobs.exchange"
     amqp_jobs_queue: str = "flowpilot.jobs.queue"
     amqp_job_created_routing_key: str = "job.created"
+
+    amqp_jobs_retry_exchange: str = "flowpilot.jobs.retry.exchange"
+
+    amqp_jobs_retry_2s_queue: str = "flowpilot.jobs.retry.2s.queue"
+    amqp_jobs_retry_4s_queue: str = "flowpilot.jobs.retry.4s.queue"
+    amqp_jobs_retry_8s_queue: str = "flowpilot.jobs.retry.8s.queue"
+
+    amqp_jobs_retry_2s_routing_key: str = "jobs.retry.2s"
+    amqp_jobs_retry_4s_routing_key: str = "jobs.retry.4s"
+    amqp_jobs_retry_8s_routing_key: str = "jobs.retry.8s"
+
+    amqp_jobs_dlq_exchange: str = "flowpilot.jobs.dlq.exchange"
+    amqp_jobs_dlq_queue: str = "flowpilot.jobs.dlq.queue"
+    amqp_jobs_dlq_routing_key: str = "jobs.dlq"
 
     database_url: str = ""
 

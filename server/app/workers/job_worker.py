@@ -4,7 +4,7 @@ import json
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 
-from app.amqp.job_publisher import publish_job_created
+from app.amqp.job_publisher import publish_job_dead_letter, publish_job_retry
 from app.amqp.topology import declare_jobs_topology
 from app.core.config import get_settings
 from app.db.database import AsyncSessionLocal
@@ -26,7 +26,7 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
         body = message.body.decode("utf-8")
         payload = json.loads(body)
 
-        print("Received job message:")
+        print(f"[{datetime.now().isoformat()}] Received job message:")
         print(payload)
 
         job_id = payload.get("job_id")
@@ -53,33 +53,42 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 if job.retry_count < job.max_retries:
                     job = await mark_job_retrying(db, job, error_message)
 
-                    delay_seconds = min(2 ** job.retry_count, 30)
+                    await publish_job_retry(
+                        job_id=job.id,
+                        task_type=job.task_type,
+                        retry_count=job.retry_count,
+                        error_message=error_message,
+                    )
 
                     print(
                         f"[{datetime.now().isoformat()}] "
                         f"Job {job.id} failed: {error_message}. "
-                        f"Retry {job.retry_count}/{job.max_retries} will be queued "
-                        f"in {delay_seconds} seconds."
-                    )
-
-                    await asyncio.sleep(delay_seconds)
-
-                    await publish_job_created(
-                        job_id=job.id,
-                        task_type=job.task_type,
-                    )
-
-                    print(
-                        f"Job {job.id} retry {job.retry_count}/{job.max_retries} queued."
+                        f"Retry {job.retry_count}/{job.max_retries} sent to retry queue."
                     )
                     return
 
-                await mark_job_failed(db, job, error_message)
-                print(f"Job {job.id} failed permanently: {error_message}")
+                job = await mark_job_failed(db, job, error_message)
+
+                await publish_job_dead_letter(
+                    job_id=job.id,
+                    task_type=job.task_type,
+                    retry_count=job.retry_count,
+                    error_message=error_message,
+                )
+
+                print(
+                    f"[{datetime.now().isoformat()}] "
+                    f"Job {job.id} failed permanently: {error_message}. "
+                    f"Sent to DLQ."
+                )
                 return
 
-            await mark_job_success(db, job)
-            print(f"Job {job.id} completed successfully")
+            job = await mark_job_success(db, job)
+
+            print(
+                f"[{datetime.now().isoformat()}] "
+                f"Job {job.id} completed successfully."
+            )
 
 
 
