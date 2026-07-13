@@ -32,9 +32,42 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 run worker:
 python -m app.workers.test_worker
-python -m app.workers.job_worker
+python -m app.workers.outbox_publisher
 
+running scripts:
+source venv/bin/activate && uvicorn app.main:app --reload
+venv/bin/python -m app.workers.job_worker
+venv/bin/python -m app.workers.outbox_publisher
+
+
+reading material
+row locking
 outbox pattern
+
+
+
+success:
+'''
+{
+  "task_type": "echo",
+  "payload": {
+    "text": "success test"
+  },
+  "max_retries": 3
+}
+
+
+fail:
+
+{
+  "task_type": "fail",
+  "payload": {
+    "text": "failure test"
+  },
+  "max_retries": 3
+}
+'''
+
 
 ```
 db queries:

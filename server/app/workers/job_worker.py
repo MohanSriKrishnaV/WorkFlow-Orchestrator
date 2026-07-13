@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime
 
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
@@ -9,14 +10,13 @@ from app.amqp.topology import declare_jobs_topology
 from app.core.config import get_settings
 from app.db.database import AsyncSessionLocal
 from app.services.job_service import (
+    claim_job_for_processing,
     get_job_by_id,
     mark_job_failed,
     mark_job_retrying,
-    mark_job_running,
     mark_job_success,
 )
 from app.workers.task_executor import execute_task
-from datetime import datetime
 
 settings = get_settings()
 
@@ -35,12 +35,20 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
             raise ValueError("Job message missing job_id")
 
         async with AsyncSessionLocal() as db:
-            job = await get_job_by_id(db, int(job_id))
+            job = await claim_job_for_processing(db, job_id)
 
             if job is None:
-                raise ValueError(f"Job not found: {job_id}")
+                existing_job = await get_job_by_id(db, job_id)
 
-            job = await mark_job_running(db, job)
+                if existing_job is None:
+                    print(f"Job {job_id} not found. Ignoring message.")
+                    return
+
+                print(
+                    f"Job {job_id} is already {existing_job.status}. "
+                    "Ignoring duplicate/non-claimable message."
+                )
+                return
 
             try:
                 await execute_task(
@@ -89,9 +97,6 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 f"[{datetime.now().isoformat()}] "
                 f"Job {job.id} completed successfully."
             )
-
-
-
 
 
 async def main() -> None:

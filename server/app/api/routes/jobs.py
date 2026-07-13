@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.amqp.job_publisher import publish_job_created
 from app.db.database import get_db_session
+from app.models.job import Job
 from app.schemas.job import JobCreateRequest, JobListResponse, JobResponse
 from app.services.job_service import (
     create_job,
@@ -11,23 +10,18 @@ from app.services.job_service import (
     mark_job_queued,
 )
 
-
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
-
-
-@router.post("", response_model=JobResponse, status_code=201)
+@router.post("", response_model=JobResponse)
 async def create_job_endpoint(
-    payload: JobCreateRequest,
+    job_in: JobCreateRequest,
     db: AsyncSession = Depends(get_db_session),
-):
-    job = await create_job(db, payload)
-
-    await publish_job_created(
-        job_id=job.id,
-        task_type=job.task_type,
+) -> Job:
+    job = await create_job(
+        db=db,
+        task_type=job_in.task_type,
+        payload=job_in.payload,
+        max_retries=job_in.max_retries,
     )
-
-    job = await mark_job_queued(db, job)
 
     return job
 
