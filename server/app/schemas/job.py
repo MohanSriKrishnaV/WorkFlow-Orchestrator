@@ -24,6 +24,8 @@ class JobResponse(BaseModel):
     updated_at: datetime
     started_at: datetime | None
     completed_at: datetime | None
+    result: dict[str, Any] | None = None
+
 
     model_config = {
         "from_attributes": True
@@ -42,3 +44,9 @@ class JobListResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class JobSummaryResponse(BaseModel):
+    total_jobs: int
+    by_status: dict[str, int]
+    by_task_type: dict[str, int]

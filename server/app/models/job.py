@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Integer, String, Text, func
+from sqlalchemy import DateTime, Enum, Integer, String, Text, func, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,6 +16,7 @@ class JobStatus(str, enum.Enum):
     FAILED = "FAILED"
     RETRYING = "RETRYING"
     DEAD_LETTER = "DEAD_LETTER"
+    CANCELLED = "CANCELLED"
 
 
 class Job(Base):
@@ -37,6 +38,12 @@ class Job(Base):
         default=JobStatus.PENDING,
         index=True,
     )
+
+    result: Mapped[dict | None] = mapped_column(
+    JSON,
+    nullable=True,
+    )
+
 
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     max_retries: Mapped[int] = mapped_column(Integer, nullable=False, default=3)

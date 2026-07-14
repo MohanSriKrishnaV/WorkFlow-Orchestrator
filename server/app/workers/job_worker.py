@@ -4,6 +4,7 @@ from datetime import datetime
 
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
+from app.db.database import get_db_session
 
 from app.amqp.job_publisher import publish_job_dead_letter, publish_job_retry
 from app.amqp.topology import declare_jobs_topology
@@ -51,9 +52,10 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 return
 
             try:
-                await execute_task(
+                task_result = await execute_task(
                     task_type=job.task_type,
                     payload=job.payload,
+                    db=db
                 )
             except Exception as exc:
                 error_message = str(exc)
@@ -91,7 +93,7 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 )
                 return
 
-            job = await mark_job_success(db, job)
+            job = await mark_job_success(db, job, task_result)
 
             print(
                 f"[{datetime.now().isoformat()}] "
