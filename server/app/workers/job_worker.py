@@ -4,12 +4,12 @@ from datetime import datetime
 
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
-from app.db.database import get_db_session
 
 from app.amqp.job_publisher import publish_job_dead_letter, publish_job_retry
 from app.amqp.topology import declare_jobs_topology
 from app.core.config import get_settings
 from app.db.database import AsyncSessionLocal
+from app.models.job import JobStatus
 from app.services.job_service import (
     claim_job_for_processing,
     get_job_by_id,
@@ -17,7 +17,10 @@ from app.services.job_service import (
     mark_job_retrying,
     mark_job_success,
 )
+from app.services.workflow_service import update_workflow_step_status_for_job,create_next_step_after_success,update_workflow_step_status_for_job
+
 from app.workers.task_executor import execute_task
+
 
 settings = get_settings()
 
@@ -51,11 +54,18 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 )
                 return
 
+            await update_workflow_step_status_for_job(
+                db=db,
+                job_id=job.id,
+                job_status=JobStatus.RUNNING,
+            )
+            await db.commit()
+
             try:
                 task_result = await execute_task(
                     task_type=job.task_type,
                     payload=job.payload,
-                    db=db
+                    db=db,
                 )
             except Exception as exc:
                 error_message = str(exc)
@@ -79,6 +89,13 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
 
                 job = await mark_job_failed(db, job, error_message)
 
+                await update_workflow_step_status_for_job(
+                    db=db,
+                    job_id=job.id,
+                    job_status=JobStatus.FAILED,
+                )
+                await db.commit()
+
                 await publish_job_dead_letter(
                     job_id=job.id,
                     task_type=job.task_type,
@@ -94,6 +111,18 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 return
 
             job = await mark_job_success(db, job, task_result)
+
+            await update_workflow_step_status_for_job(
+                db=db,
+                job_id=job.id,
+                job_status=JobStatus.SUCCESS,
+            )
+            await db.commit()
+
+            await create_next_step_after_success(
+                db=db,
+                completed_job_id=job.id,
+            )
 
             print(
                 f"[{datetime.now().isoformat()}] "

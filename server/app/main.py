@@ -6,6 +6,7 @@ from app.api.routes.health import router as health_router
 from app.api.routes.amqp_test import router as amqp_test_router
 from app.api.routes.jobs import router as jobs_router
 from app.api.routes import files
+from app.api.routes.workflows import router as workflows_router
 
 settings = get_settings()
 
@@ -32,6 +33,7 @@ app.include_router(health_router, prefix=settings.api_prefix)
 app.include_router(amqp_test_router, prefix=settings.api_prefix)
 app.include_router(jobs_router, prefix=settings.api_prefix)
 app.include_router(files.router, prefix=settings.api_prefix)
+app.include_router(workflows_router, prefix=settings.api_prefix)
 
 @app.get("/")
 async def root():

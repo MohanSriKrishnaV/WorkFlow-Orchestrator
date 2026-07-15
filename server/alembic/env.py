@@ -9,7 +9,7 @@ from alembic import context
 from app.core.config import get_settings
 from app.db.database import Base
 from app.models import Job  # noqa: F401
-
+from app.models.workflow import Workflow, WorkflowStep
 
 config = context.config
 
