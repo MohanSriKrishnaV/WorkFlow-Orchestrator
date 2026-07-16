@@ -8,12 +8,9 @@ It uses:
 - FastAPI backend
 - PostgreSQL for persistent state
 - RabbitMQ/AMQP for background job delivery
-- Worker process for asynchronous task execution
+- Worker processes for asynchronous task execution
 
-## Current Status
-
-
-## Project Structure
+## Project structure
 
 ```text
 flowpilot/
@@ -23,45 +20,54 @@ flowpilot/
 
 ## Backend
 
+Setup and run:
+
 ```bash
 cd server
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-# uvicorn app.main:app --reload
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-run worker:
-python -m app.workers.test_worker
-python -m app.workers.outbox_publisher
-
-running scripts:
-source venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-venv/bin/python -m app.workers.job_worker
-venv/bin/python -m app.workers.outbox_publisher
-
-
-scripts:
-venv/bin/python  
-
-
- $ python scripts/random_workflow_trigger.py \
-  --api-base http://127.0.0.1:8000/api/v1 \
-  --min 5 --max 10 --file-id-min 19 --file-id-max 23
-docker compose up -d
-
-promethues:
-http_requests_total
-http_request_duration_seconds_count
-http_server_requests_total
-process_cpu_seconds_total
-
-
-'''
-
-
 ```
 
-### Backend architecture
+Run the API:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Start workers:
+
+```bash
+python -m app.workers.job_worker
+python -m app.workers.outbox_publisher
+```
+
+Run the test worker:
+
+```bash
+python -m app.workers.test_worker
+```
+
+Trigger sample workflows:
+
+```bash
+python scripts/random_workflow_trigger.py \
+  --api-base http://127.0.0.1:8000/api/v1 \
+  --min 5 --max 10 --file-id-min 19 --file-id-max 23
+```
+
+Use Docker Compose for a local environment:
+
+```bash
+docker compose up -d
+```
+
+Useful endpoints:
+
+- Health: `http://127.0.0.1:8000/api/v1/health`
+- Swagger docs: `http://127.0.0.1:8000/docs`
+
+## Backend architecture
 
 The backend is implemented in `server/app` as an async FastAPI service with a transactional database, an outbox event pattern, and separate worker processes for reliable job execution.
 
@@ -135,7 +141,7 @@ Frontend -> FastAPI API -> PostgreSQL
    - Using durable queues, persistent messages, and DLX-based retry improves robustness during broker restarts and partial failures.
 
 7. Job worker and execution
-   - `server/app/workers/job_worker.py` consumers a job message and looks up `job_id` from the payload.
+   - `server/app/workers/job_worker.py` consumes a job message and looks up `job_id` from the payload.
    - It claims a job for processing with `claim_job_for_processing()`, ensuring only one worker can set the job to `RUNNING`.
    - The worker updates workflow step state to `RUNNING` before executing the task.
    - `execute_task()` supports `echo`, `csv_profile`, `csv_clean_basic`, and `fail` task types, with CSV tasks accessing the database for file metadata or processing logic.
@@ -165,29 +171,23 @@ Frontend -> FastAPI API -> PostgreSQL
    - Using durable queues, persistent messages, and DB-backed outbox state improves resilience against partial outages.
    - Health and doc endpoints support observability, developer debugging, and quick validation of the running service.
 
-```
-db queries:
-select * from jobs WHERE status='PENDING';
-
-Backend runs at:
-
-```text
-http://127.0.0.1:8000
-```
-
-Health endpoint:
-
-```text
-http://127.0.0.1:8000/api/v1/health
-```
-
-Swagger docs:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
 ## Frontend
+
+The client is a React + Vite TypeScript application located in the `client/` folder.
+
+Key frontend technologies:
+
+- React 19 with TypeScript
+- Vite for development and production builds
+- React Router DOM for client-side routing
+- Tailwind CSS for styling
+- Lucide React icons
+- Axios for API requests
+- TanStack React Query for data fetching and caching
+- Zod for form and schema validation
+- Zustand for lightweight state management
+
+Run the frontend locally:
 
 ```bash
 cd client
@@ -195,7 +195,14 @@ npm install
 npm run dev
 ```
 
-Frontend usually runs at:
+Build for production:
+
+```bash
+cd client
+npm run build
+```
+
+The development server usually runs at:
 
 ```text
 http://localhost:5173
