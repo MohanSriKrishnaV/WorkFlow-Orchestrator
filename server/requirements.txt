@@ -8,4 +8,13 @@ aio-pika==9.5.4
 SQLAlchemy==2.0.36
 asyncpg==0.30.0
 alembic==1.14.0
-python-multipart
+python-multipart==0.0.32
+prometheus-fastapi-instrumentator==8.0.2
+
+
+opentelemetry-api==1.43.0
+opentelemetry-sdk==1.43.0
+opentelemetry-exporter-otlp==1.43.0
+opentelemetry-instrumentation-fastapi==0.64b0
+opentelemetry-instrumentation-sqlalchemy==0.64b0
+opentelemetry-instrumentation-requests==0.64b0
