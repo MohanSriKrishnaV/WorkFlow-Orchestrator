@@ -27,6 +27,11 @@ export default function FilesPage() {
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if(file && file.type !== "text/csv") {
+      setError("Only CSV files are allowed");
+      e.target.value = "";
+      return;
+    }
     if (!file) return;
     try {
       setUploading(true);
