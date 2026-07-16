@@ -1,6 +1,14 @@
 # FlowPilot
 
-FlowPilot is a workflow orchestration platform for reliable bulk CSV processing.
+FlowPilot is a workflow orchestration platform for reliable bulk CSV processing. The core value comes from backend workflow orchestration, reliable AMQP delivery, transactional job lifecycle management, and asynchronous worker execution.
+
+Key backend capabilities include:
+
+- transactionally creating jobs and outbox events within the same database operation
+- guaranteeing at-least-once delivery through RabbitMQ retry queues and dead-letter routing
+- separating publish and processing concerns with an outbox publisher and job worker
+- orchestrating workflow steps and conditional task transitions after job success or failure
+- storing workflow state, job results, retry history, and error metadata in PostgreSQL
 
 It uses:
 
@@ -132,13 +140,19 @@ Frontend -> FastAPI API -> PostgreSQL
    - This design delivers at-least-once semantics for messages while keeping the database authoritative.
 
 6. AMQP topology and retry delivery
-   - `server/app/amqp/topology.py` builds the RabbitMQ infrastructure at startup: a durable direct exchange, a main job queue, retry queues with TTL, and a dead-letter queue.
-   - The main job queue is bound to `job.created` messages, while retry queues are bound to separate retry routing keys.
-   - Each retry queue uses `x-message-ttl` and `x-dead-letter-exchange` so expired messages return to the main exchange after a delay.
-   - The current topology provides fixed retry delays of 2s, 4s, and 8s without adding a dedicated scheduler service.
-   - `server/app/amqp/job_publisher.py` sends persistent JSON messages and chooses the correct retry route based on `retry_count`.
-   - Dead-letter delivery is handled by `publish_job_dead_letter()`, allowing failed jobs to be inspected or processed separately later.
-   - Using durable queues, persistent messages, and DLX-based retry improves robustness during broker restarts and partial failures.
+   - `server/app/amqp/topology.py` builds the RabbitMQ infrastructure at startup: a durable direct exchange routes messages to the main job queue, retry queues with TTL, and a dead-letter queue.
+
+   ![AMQP exchange layout](extras/images/amqp.exchanges.png)
+
+   ![AMQP queue topology](extras/images/amqp.queues.png)
+
+   - The main job queue is bound to `job.created` messages, while retry queues are bound to separate retry routing keys for delayed delivery.
+   - Each retry queue is configured with `x-message-ttl` and `x-dead-letter-exchange`, so messages automatically return to the exchange after the TTL expires and are re-routed to the main job queue.
+   - This design creates a retry chain: first retry queue, second retry queue, third retry queue, then dead-letter queue if retries are exhausted.
+   - The current topology provides fixed retry delays such as 2s, 4s, and 8s, giving the system delay-based recovery without needing an external scheduler.
+   - `server/app/amqp/job_publisher.py` sends persistent JSON messages and selects the correct retry route based on the job's `retry_count`.
+   - When a message reaches the final retry limit, `publish_job_dead_letter()` moves it to the dead-letter queue for inspection and manual recovery.
+   - Durable exchanges, persistent messages, retry queue TTLs, and DLX-based re-routing make the system resilient to broker restarts and transient service failures.
 
 7. Job worker and execution
    - `server/app/workers/job_worker.py` consumes a job message and looks up `job_id` from the payload.
