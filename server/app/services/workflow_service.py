@@ -16,7 +16,7 @@ from app.schemas.workflow import (
 from app.services.file_service import get_file_by_id
 from app.services.job_service import create_job
 from app.models.file import File
-
+from datetime import datetime, timezone
 
 async def create_workflow(
     db: AsyncSession,
@@ -775,3 +775,49 @@ async def get_csv_cleaning_workflow_result(
         },
         "failure": failure,
     }
+
+
+
+
+async def refresh_csv_workflow_status(db: AsyncSession, workflow_id: int) -> None:
+    result = await db.execute(
+        select(Workflow).where(Workflow.id == workflow_id)
+    )
+    workflow = result.scalar_one_or_none()
+    if workflow is None or workflow.name != "csv_cleaning_pipeline":
+        return
+
+    steps_result = await db.execute(
+        select(WorkflowStep).where(WorkflowStep.workflow_id == workflow_id)
+    )
+    steps = list(steps_result.scalars().all())
+    if not steps:
+        return
+
+    required = {"profile_input", "clean_csv", "profile_output"}
+    by_name = {s.step_name: s for s in steps}
+
+    # If any required step failed => workflow failed
+    for name in required:
+        step = by_name.get(name)
+        if step is not None and step.status == WorkflowStepStatus.FAILED:
+            workflow.status = WorkflowStatus.FAILED
+            workflow.completed_at = datetime.now(timezone.utc)
+            await db.flush()
+            return
+
+    # If all required steps exist and are success => workflow success
+    all_done = all(
+        (name in by_name and by_name[name].status == WorkflowStepStatus.SUCCESS)
+        for name in required
+    )
+    if all_done:
+        workflow.status = WorkflowStatus.SUCCESS
+        workflow.completed_at = datetime.now(timezone.utc)
+        await db.flush()
+        return
+
+    # Otherwise still running
+    workflow.status = WorkflowStatus.RUNNING
+    workflow.completed_at = None
+    await db.flush()

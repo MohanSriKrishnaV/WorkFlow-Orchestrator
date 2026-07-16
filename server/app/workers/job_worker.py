@@ -17,10 +17,11 @@ from app.services.job_service import (
     mark_job_retrying,
     mark_job_success,
 )
-from app.services.workflow_service import update_workflow_step_status_for_job,create_next_step_after_success,update_workflow_step_status_for_job
+from app.services.workflow_service import update_workflow_step_status_for_job,create_next_step_after_success,update_workflow_step_status_for_job,refresh_csv_workflow_status
 
 from app.workers.task_executor import execute_task
-
+from sqlalchemy import select
+from app.models.workflow import WorkflowStep
 
 settings = get_settings()
 
@@ -59,6 +60,9 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 job_id=job.id,
                 job_status=JobStatus.RUNNING,
             )
+
+            await _refresh_parent_workflow_for_job(db, job.id)
+
             await db.commit()
 
             try:
@@ -94,6 +98,9 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                     job_id=job.id,
                     job_status=JobStatus.FAILED,
                 )
+
+                await _refresh_parent_workflow_for_job(db, job.id)
+
                 await db.commit()
 
                 await publish_job_dead_letter(
@@ -117,6 +124,9 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
                 job_id=job.id,
                 job_status=JobStatus.SUCCESS,
             )
+
+            await _refresh_parent_workflow_for_job(db, job.id)
+
             await db.commit()
 
             await create_next_step_after_success(
@@ -148,6 +158,15 @@ async def main() -> None:
 
         await asyncio.Future()
 
+
+
+async def _refresh_parent_workflow_for_job(db, job_id: int) -> None:
+    result = await db.execute(
+        select(WorkflowStep).where(WorkflowStep.job_id == job_id)
+    )
+    step = result.scalar_one_or_none()
+    if step is not None:
+        await refresh_csv_workflow_status(db, step.workflow_id)
 
 if __name__ == "__main__":
     asyncio.run(main())

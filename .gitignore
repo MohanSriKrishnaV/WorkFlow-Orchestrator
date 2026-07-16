@@ -82,6 +82,7 @@ logs/
 uploads/
 tmp/
 temp/
+outputs/
 
 # =========================
 # Docker local override files

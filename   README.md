@@ -42,8 +42,11 @@ venv/bin/python -m app.workers.outbox_publisher
 
 scripts:
 venv/bin/python  
-python scripts/random_workflow_trigger.py --min 5 --max 20 --file-id-min 1 --file-id-max 10
 
+
+ $ python scripts/random_workflow_trigger.py \
+  --api-base http://127.0.0.1:8000/api/v1 \
+  --min 5 --max 10 --file-id-min 19 --file-id-max 23
 docker compose up -d
 
 promethues:
