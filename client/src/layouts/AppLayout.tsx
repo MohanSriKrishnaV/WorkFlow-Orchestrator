@@ -22,14 +22,16 @@ export default function AppLayout() {
             <FileText className="nav-icon" />
             Files
           </NavLink>
+
+            <NavLink to="/workflows" className={navLinkClass}>
+            <Layers className="nav-icon" />
+            Workflows
+          </NavLink>
           <NavLink to="/workflows/csv-cleaning/new" className={navLinkClass}>
             <PlusCircle className="nav-icon" />
             New Workflow
           </NavLink>
-          <NavLink to="/workflows" className={navLinkClass}>
-            <Layers className="nav-icon" />
-            Workflows
-          </NavLink>
+        
           <NavLink to="/jobs" className={navLinkClass}>
             <ListCheck className="nav-icon" />
             Jobs (optional)

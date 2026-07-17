@@ -69,6 +69,10 @@ def random_clean_options() -> dict[str, bool]:
         "drop_missing_rows": random.choice([True, False]),
         "trim_whitespace": random.choice([True, False]),
         "lowercase_headers": random.choice([True, False]),
+        "remove_empty_rows": random.choice([True, False]),
+        "remove_duplicate_rows": random.choice([True, False]),
+        "normalize_column_names": random.choice([True, False]),
+        "remove_empty_columns": random.choice([True, False]),
     }
     if not any(options.values()):
         options[random.choice(list(options.keys()))] = True

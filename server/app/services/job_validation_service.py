@@ -5,12 +5,23 @@ from app.services.file_service import get_file_by_id
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-CSV_TASK_TYPES = {"csv_profile", "csv_clean_basic"}
+# CSV_TASK_TYPES = {"csv_profile", "csv_clean_basic"}
 
 CSV_CLEAN_BOOLEAN_OPTIONS = {
     "drop_missing_rows",
     "trim_whitespace",
     "lowercase_headers",
+}
+
+CSV_CLEAN_BOOLEAN_OPTIONS = {
+    "drop_missing_rows",
+    "trim_whitespace",
+    "lowercase_headers",
+    "remove_duplicate_rows",
+    "remove_empty_rows",
+    # "normalize_column_names",
+    "normalize_column_names",
+    "remove_empty_columns",
 }
 
 
@@ -81,8 +92,13 @@ async def validate_job_create_payload(
         raise ValueError(f"{task_type} requires a .csv file")
 
     if task_type == "csv_clean_basic":
+        clean_options = payload.get("clean_options", payload)
+
+        if not isinstance(clean_options, dict):
+            raise ValueError("csv_clean_basic payload.clean_options must be an object")
+
         for option_name in CSV_CLEAN_BOOLEAN_OPTIONS:
-            if option_name in payload and not _is_boolean_like(payload[option_name]):
+            if option_name in clean_options and not _is_boolean_like(clean_options[option_name]):
                 raise ValueError(
-                    f"csv_clean_basic payload.{option_name} must be boolean-like"
+                    f"csv_clean_basic payload.clean_options.{option_name} must be boolean-like"
                 )

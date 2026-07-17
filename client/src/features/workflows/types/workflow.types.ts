@@ -2,6 +2,10 @@ export type CsvCleanOptions = {
   drop_missing_rows: boolean;
   trim_whitespace: boolean;
   lowercase_headers: boolean;
+  remove_empty_rows: boolean;
+  remove_duplicate_rows: boolean;
+  normalize_column_names: boolean;
+  remove_empty_columns: boolean;
 };
 
 export type CreateCsvWorkflowRequest = {

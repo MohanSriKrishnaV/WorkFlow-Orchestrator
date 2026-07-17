@@ -16,6 +16,10 @@ export default function CreateWorkflowPage() {
   const [dropMissingRows, setDropMissingRows] = useState(true);
   const [trimWhitespace, setTrimWhitespace] = useState(true);
   const [lowercaseHeaders, setLowercaseHeaders] = useState(false);
+  const [removeEmptyRows, setRemoveEmptyRows] = useState(true);
+  const [removeDuplicateRows, setRemoveDuplicateRows] = useState(true);
+  const [normalizeColumnNames, setNormalizeColumnNames] = useState(true);
+  const [removeEmptyColumns, setRemoveEmptyColumns] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -38,7 +42,7 @@ export default function CreateWorkflowPage() {
       return;
     }
 
-    if(!dropMissingRows && !trimWhitespace && !lowercaseHeaders) {
+    if(!dropMissingRows && !trimWhitespace && !lowercaseHeaders && !removeEmptyRows && !removeDuplicateRows && !normalizeColumnNames && !removeEmptyColumns) {
       setError("Please select at least one cleaning option.");
       return;
     }
@@ -53,6 +57,10 @@ export default function CreateWorkflowPage() {
           drop_missing_rows: dropMissingRows,
           trim_whitespace: trimWhitespace,
           lowercase_headers: lowercaseHeaders,
+          remove_empty_rows: removeEmptyRows,
+          remove_duplicate_rows: removeDuplicateRows,
+          normalize_column_names: normalizeColumnNames,
+          remove_empty_columns: removeEmptyColumns,
         },
       });
 
@@ -121,6 +129,45 @@ export default function CreateWorkflowPage() {
             />
             Lowercase headers
           </label>
+
+
+<label className="checkbox-field">
+  <input
+    type="checkbox"
+    checked={removeEmptyRows}
+    onChange={(e) => setRemoveEmptyRows(e.target.checked)}
+  />
+  Remove empty rows
+</label>
+
+
+<label className="checkbox-field">
+  <input
+    type="checkbox"
+    checked={removeDuplicateRows}
+    onChange={(e) => setRemoveDuplicateRows(e.target.checked)}
+  />
+  Remove duplicate rows
+</label>
+
+
+<label className="checkbox-field">
+  <input
+    type="checkbox"
+    checked={normalizeColumnNames}
+    onChange={(e) => setNormalizeColumnNames(e.target.checked)}
+  />
+  Normalize column names
+</label>
+
+<label className="checkbox-field">
+  <input
+    type="checkbox"
+    checked={removeEmptyColumns}
+    onChange={(e) => setRemoveEmptyColumns(e.target.checked)}
+  />
+  Remove empty columns
+</label>
 
           {error && <p className="form-error">{error}</p>}
 
