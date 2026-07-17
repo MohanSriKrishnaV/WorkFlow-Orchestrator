@@ -4,11 +4,14 @@ import CreateWorkflowPage from "../features/workflows/pages/CreateWorkflowPage";
 import FilesPage from "../features/files/pages/FilesPage";
 import WorkFlowDetailsPage from "../features/workflows/pages/WorkflowDetailsPage";
 import WorkFlowHomePage from "../features/workflows/pages/WorkFlowHomePage";
-
-
+import LoginPage from "../features/auth/pages/LoginPage";
 
 export const router = createBrowserRouter([
+        { path: "login", element: <LoginPage /> },
+
   {
+
+
     path: "/",
     element: <AppLayout />,
     children: [

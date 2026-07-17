@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 :root {
   --text: #4b5563;
   --text-h: #111827;
@@ -51,12 +52,19 @@ html,
 body,
 #root {
   min-height: 100%;
+    font-family: 'Inter', sans-serif !important; 
+
 }
 
 body {
   margin: 0;
   background: var(--bg);
+  font-family: 'Inter', sans-serif !important; 
+  /* font-family: 'Geist', sans-serif;  */
 }
+
+
+
 
 #root {
   width: min(1200px, 100%);
