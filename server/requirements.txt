@@ -18,3 +18,5 @@ opentelemetry-exporter-otlp==1.43.0
 opentelemetry-instrumentation-fastapi==0.64b0
 opentelemetry-instrumentation-sqlalchemy==0.64b0
 opentelemetry-instrumentation-requests==0.64b0
+
+prometheus-fastapi-instrumentator==8.0.2
