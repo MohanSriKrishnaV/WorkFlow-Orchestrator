@@ -1,0 +1,16 @@
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+.env
+venv
+.git
+.gitignore
+.env.*
+*.sqlite3
+
+# Ignore local Python cache and editor files
+*.egg-info
+*.pytest_cache
+__pycache__/
+*.swp

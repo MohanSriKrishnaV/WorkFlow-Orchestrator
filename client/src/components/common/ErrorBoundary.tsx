@@ -16,7 +16,6 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // You can log error details to a monitoring service here.
     console.error("Uncaught error in component tree:", error, errorInfo);
   }
 

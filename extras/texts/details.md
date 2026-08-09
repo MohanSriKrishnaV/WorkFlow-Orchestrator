@@ -77,15 +77,6 @@ If one fails:
 * Idempotency
 * Job dependencies
 
-### Monitoring
-
-* Workflow status
-* Job history
-* Execution timeline
-* Worker health
-* Queue metrics
-* Logs
-
 ### Authentication
 
 * JWT

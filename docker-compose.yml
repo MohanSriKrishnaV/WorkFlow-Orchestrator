@@ -1,65 +1,57 @@
-version: "3.9"
-
 services:
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-
-    ports:
-      - "9090:9090"
-
+  db:
+    image: postgres:16-alpine
+    container_name: wf_orchestrator_db
+    environment:
+      POSTGRES_DB: flowpilot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-    restart: unless-stopped
-
-  grafana:
-    image: grafana/grafana-oss:latest
-    container_name: grafana
-
+      - db-data:/var/lib/postgresql/data
     ports:
-      - "3000:3000"
-
+      - "5432:5432"
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: wf_orchestrator_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: wf_orchestrator_server
     depends_on:
-      - prometheus
-
-    volumes:
-      - grafana-storage:/var/lib/grafana
-  
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: jaeger
-
+      - db
+      - rabbitmq
+    environment:
+      APP_DEBUG: "true"
+      API_PREFIX: /api/v1
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/flowpilot
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     ports:
-      - "16686:16686"   # Jaeger UI
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP
-
+      - "8000:8000"
     restart: unless-stopped
-  
-  # otel-collector:
-  #   image: otel/opentelemetry-collector-contrib:latest
-  #   container_name: otel-collector
 
-  #   command:
-  #     - "--config=/etc/otelcol/config.yaml"
-
-  #   volumes:
-  #     - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
-
-  #   ports:
-  #     - "4317:4317"
-  #     - "4318:4318"
-
-  #   depends_on:
-  #     - jaeger
-
-  #   restart: unless-stopped
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+    container_name: wf_orchestrator_client
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    depends_on:
+      - server
 
 volumes:
-  grafana-storage:
+  db-data:
