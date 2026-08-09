@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
 
 
-    rabbitmq_url: str = ""
+    rabbitmq_url: str
     amqp_exchange: str = "flowpilot.exchange"
     amqp_queue: str = "flowpilot.test.queue"
     amqp_routing_key: str = "test.message"
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     amqp_jobs_dlq_queue: str = "flowpilot.jobs.dlq.queue"
     amqp_jobs_dlq_routing_key: str = "jobs.dlq"
 
-    database_url: str = ""
+    database_url: str
 
 
     model_config = SettingsConfigDict(
